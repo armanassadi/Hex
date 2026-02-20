@@ -6,6 +6,20 @@ import Foundation
 /// Changing these values may affect hotkey responsiveness and conflict with system shortcuts.
 public enum HexCoreConstants {
     
+    // MARK: - Bundle Identity
+
+    /// Bundle identifier for the custom fork.
+    ///
+    /// **Rationale:** Centralized here so all references to the bundle ID come from one place.
+    /// This avoids merge conflicts when pulling upstream updates and makes rebranding trivial.
+    ///
+    /// **Used in:**
+    /// - `AppHexSettings`: Application Support directory name
+    /// - `TranscriptionClient`: Model storage path
+    /// - `ParakeetClient`: Cache path
+    /// - `HexLog`: Log subsystem
+    public static let bundleIdentifier = "com.arman.HexPro"
+
     // MARK: - Hotkey Timing Thresholds
     
     /// Maximum time between two hotkey taps to be considered a double-tap.
