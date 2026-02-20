@@ -67,6 +67,8 @@ struct WordRemappingsView: View {
 					vocabularySection
 				case .removals:
 					removalsSection
+				case .formatting:
+					formattingSection
 				}
 			}
 			.frame(maxWidth: .infinity, alignment: .leading)
@@ -150,6 +152,52 @@ struct WordRemappingsView: View {
 		}
 	}
 
+	private var formattingSection: some View {
+		GroupBox {
+			VStack(alignment: .leading, spacing: 10) {
+				Toggle("Enable Smart Formatting", isOn: $store.hexSettings.smartFormattingEnabled)
+					.toggleStyle(.checkbox)
+
+				Toggle(
+					"Remove trailing period on short phrases",
+					isOn: $store.hexSettings.smartFormattingConfig.removeTrailingPeriod
+				)
+				.toggleStyle(.checkbox)
+				.disabled(!store.hexSettings.smartFormattingEnabled)
+
+				Toggle(
+					"Lowercase short phrases",
+					isOn: $store.hexSettings.smartFormattingConfig.lowercaseShortPhrases
+				)
+				.toggleStyle(.checkbox)
+				.disabled(!store.hexSettings.smartFormattingEnabled)
+
+				HStack {
+					Text("Short phrase threshold:")
+					Picker(
+						"",
+						selection: $store.hexSettings.smartFormattingConfig.shortPhraseMaxWords
+					) {
+						ForEach(2...10, id: \.self) { count in
+							Text("\(count) words").tag(count)
+						}
+					}
+					.labelsHidden()
+					.frame(width: 120)
+					.disabled(!store.hexSettings.smartFormattingEnabled)
+				}
+			}
+			.padding(.vertical, 4)
+		} label: {
+			VStack(alignment: .leading, spacing: 4) {
+				Text("Smart Formatting")
+					.font(.headline)
+				Text("Automatically clean up short phrases — strip trailing periods, lowercase casual replies.")
+					.settingsCaption()
+			}
+		}
+	}
+
 	private var vocabularyColumnHeaders: some View {
 		HStack(spacing: 8) {
 			Text("Word")
@@ -183,6 +231,13 @@ struct WordRemappingsView: View {
 
 	private var previewText: String {
 		var output = store.remappingScratchpadText
+		if store.hexSettings.smartFormattingEnabled {
+			output = TextFormattingEngine.apply(
+				output,
+				config: store.hexSettings.smartFormattingConfig,
+				vocabulary: store.hexSettings.customVocabulary
+			)
+		}
 		if store.hexSettings.wordRemovalsEnabled {
 			output = WordRemovalApplier.apply(output, removals: store.hexSettings.wordRemovals)
 		}
@@ -250,6 +305,7 @@ private struct RemovalRow: View {
 private enum ModificationSection: String, CaseIterable, Identifiable {
 	case vocabulary
 	case removals
+	case formatting
 
 	var id: String { rawValue }
 
@@ -259,6 +315,8 @@ private enum ModificationSection: String, CaseIterable, Identifiable {
 			return "Vocabulary"
 		case .removals:
 			return "Word Removals"
+		case .formatting:
+			return "Formatting"
 		}
 	}
 }

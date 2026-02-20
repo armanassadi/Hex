@@ -25,6 +25,8 @@ final class HexSettingsMigrationTests: XCTestCase {
 		XCTAssertEqual(decoded.hasCompletedStorageMigration, true)
 		XCTAssertEqual(decoded.wordRemovalsEnabled, true, "Default for wordRemovalsEnabled should be true")
 		XCTAssertEqual(decoded.customVocabulary, [], "Legacy fixture should default to empty vocabulary")
+		XCTAssertEqual(decoded.smartFormattingEnabled, true, "Smart formatting should default to enabled")
+		XCTAssertEqual(decoded.smartFormattingConfig, TextFormattingEngine.Config(), "Smart formatting config should use defaults")
 	}
 
 	func testEncodeDecodeRoundTripPreservesDefaults() throws {

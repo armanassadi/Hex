@@ -412,12 +412,21 @@ private extension TranscriptionFeature {
     let removalsEnabled = state.hexSettings.wordRemovalsEnabled
     let removals = state.hexSettings.wordRemovals
     let vocabulary = state.hexSettings.customVocabulary
+    let smartFormattingEnabled = state.hexSettings.smartFormattingEnabled
+    let smartFormattingConfig = state.hexSettings.smartFormattingConfig
     let modifiedResult: String
     if state.isRemappingScratchpadFocused {
       modifiedResult = result
       transcriptionFeatureLogger.info("Scratchpad focused; skipping word modifications")
     } else {
       var output = result
+      if smartFormattingEnabled {
+        let formatted = TextFormattingEngine.apply(output, config: smartFormattingConfig, vocabulary: vocabulary)
+        if formatted != output {
+          transcriptionFeatureLogger.info("Applied smart formatting")
+        }
+        output = formatted
+      }
       if removalsEnabled {
         let removedResult = WordRemovalApplier.apply(output, removals: removals)
         if removedResult != output {

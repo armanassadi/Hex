@@ -56,6 +56,8 @@ public struct HexSettings: Codable, Equatable, Sendable {
 	public var wordRemovals: [WordRemoval]
 	public var wordRemappings: [WordRemapping]
 	public var customVocabulary: [String]
+	public var smartFormattingEnabled: Bool
+	public var smartFormattingConfig: TextFormattingEngine.Config
 
 	public init(
 		soundEffectsEnabled: Bool = true,
@@ -80,7 +82,9 @@ public struct HexSettings: Codable, Equatable, Sendable {
 		wordRemovalsEnabled: Bool = true,
 		wordRemovals: [WordRemoval] = HexSettings.defaultWordRemovals,
 		wordRemappings: [WordRemapping] = [],
-		customVocabulary: [String] = []
+		customVocabulary: [String] = [],
+		smartFormattingEnabled: Bool = true,
+		smartFormattingConfig: TextFormattingEngine.Config = .init()
 	) {
 		self.soundEffectsEnabled = soundEffectsEnabled
 		self.soundEffectsVolume = soundEffectsVolume
@@ -105,6 +109,8 @@ public struct HexSettings: Codable, Equatable, Sendable {
 		self.wordRemovals = wordRemovals
 		self.wordRemappings = wordRemappings
 		self.customVocabulary = customVocabulary
+		self.smartFormattingEnabled = smartFormattingEnabled
+		self.smartFormattingConfig = smartFormattingConfig
 	}
 
 	public init(from decoder: Decoder) throws {
@@ -151,6 +157,8 @@ private enum HexSettingKey: String, CodingKey, CaseIterable {
 	case wordRemovals
 	case wordRemappings
 	case customVocabulary
+	case smartFormattingEnabled
+	case smartFormattingConfig
 }
 
 private struct SettingsField<Value: Codable & Sendable> {
@@ -301,6 +309,8 @@ private enum HexSettingsSchema {
 			.customVocabulary,
 			keyPath: \.customVocabulary,
 			default: defaults.customVocabulary
-		).eraseToAny()
+		).eraseToAny(),
+		SettingsField(.smartFormattingEnabled, keyPath: \.smartFormattingEnabled, default: defaults.smartFormattingEnabled).eraseToAny(),
+		SettingsField(.smartFormattingConfig, keyPath: \.smartFormattingConfig, default: defaults.smartFormattingConfig).eraseToAny()
 	]
 }
