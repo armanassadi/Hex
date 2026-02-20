@@ -727,14 +727,35 @@ public enum TextFormattingEngine {
 	// MARK: - Email Formatting
 
 	/// Convert spoken email addresses to proper format.
-	/// e.g. "name at gmail dot com" → "name@gmail.com"
-	/// e.g. "john dot doe at company dot com" → "john.doe@company.com"
+	/// Handles multiple Parakeet output styles:
+	/// - Fully spoken: "john at yahoo dot com" → "john@yahoo.com"
+	/// - Domain already joined: "john at yahoo.com" → "john@yahoo.com"
+	/// - Dotted local part: "john dot doe at company dot com" → "john.doe@company.com"
 	static func formatEmailExpressions(_ text: String) -> String {
 		var output = text
+		let tlds = "com|org|net|edu|gov|io|ai|co|dev|me|info|biz"
 
-		// Pattern: [word(s with dots)] at [word] dot [word]
-		let emailPattern = "\\b([\\w]+(?:\\s+dot\\s+[\\w]+)*)\\s+at\\s+([\\w]+(?:\\s+dot\\s+[\\w]+)*)\\s+dot\\s+(com|org|net|edu|gov|io|ai|co|dev)\\b"
-		if let regex = try? NSRegularExpression(pattern: emailPattern, options: .caseInsensitive) {
+		// Pattern 1: Domain already has real period — "john at yahoo.com"
+		let joinedPattern = "\\b([\\w]+(?:\\s+dot\\s+[\\w]+)*)\\s+at\\s+([\\w]+(?:\\.[\\w]+)*\\.(?:\(tlds)))\\b"
+		if let regex = try? NSRegularExpression(pattern: joinedPattern, options: .caseInsensitive) {
+			let matches = regex.matches(in: output, range: NSRange(output.startIndex..., in: output))
+			for match in matches.reversed() {
+				guard let fullRange = Range(match.range, in: output),
+					  let localRange = Range(match.range(at: 1), in: output),
+					  let domainRange = Range(match.range(at: 2), in: output) else { continue }
+
+				let localPart = String(output[localRange])
+					.replacingOccurrences(of: " dot ", with: ".", options: .caseInsensitive)
+					.lowercased()
+				let domain = String(output[domainRange]).lowercased()
+
+				output.replaceSubrange(fullRange, with: "\(localPart)@\(domain)")
+			}
+		}
+
+		// Pattern 2: Fully spoken — "john at yahoo dot com"
+		let spokenPattern = "\\b([\\w]+(?:\\s+dot\\s+[\\w]+)*)\\s+at\\s+([\\w]+(?:\\s+dot\\s+[\\w]+)*)\\s+dot\\s+(\(tlds))\\b"
+		if let regex = try? NSRegularExpression(pattern: spokenPattern, options: .caseInsensitive) {
 			let matches = regex.matches(in: output, range: NSRange(output.startIndex..., in: output))
 			for match in matches.reversed() {
 				guard let fullRange = Range(match.range, in: output),
@@ -750,8 +771,7 @@ public enum TextFormattingEngine {
 					.lowercased()
 				let tld = String(output[tldRange]).lowercased()
 
-				let email = "\(localPart)@\(domainPart).\(tld)"
-				output.replaceSubrange(fullRange, with: email)
+				output.replaceSubrange(fullRange, with: "\(localPart)@\(domainPart).\(tld)")
 			}
 		}
 

@@ -518,6 +518,26 @@ final class TextFormattingEngineTests: XCTestCase {
 		XCTAssertTrue(result.contains("john.doe@company.com"))
 	}
 
+	func testFormatsEmailWithJoinedDomain() {
+		var config = allOffConfig()
+		config.formatEmails = true
+		let result = TextFormattingEngine.apply(
+			"Send it to john at yahoo.com please.",
+			config: config
+		)
+		XCTAssertTrue(result.contains("john@yahoo.com"), "Got: \(result)")
+	}
+
+	func testFormatsEmailWithJoinedDomainAI() {
+		var config = allOffConfig()
+		config.formatEmails = true
+		let result = TextFormattingEngine.apply(
+			"My email is arman at steno.ai for reference.",
+			config: config
+		)
+		XCTAssertTrue(result.contains("arman@steno.ai"), "Got: \(result)")
+	}
+
 	// MARK: - Integration: Real-World Transcription
 
 	func testRealWorldExample() {
