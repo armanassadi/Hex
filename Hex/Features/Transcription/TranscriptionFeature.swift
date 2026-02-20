@@ -527,7 +527,7 @@ private extension TranscriptionFeature {
       try? FileManager.default.removeItem(at: audioURL)
     }
 
-    await pasteboard.paste(result)
+    await pasteboard.paste(result + " ")
     soundEffect.play(.pasteTranscript)
   }
 }
