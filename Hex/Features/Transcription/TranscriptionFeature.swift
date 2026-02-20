@@ -173,7 +173,7 @@ private extension TranscriptionFeature {
 
         // Always keep hotKeyProcessor in sync with current user hotkey preference
         hotKeyProcessor.hotkey = hexSettings.hotkey
-        hotKeyProcessor.useDoubleTapOnly = hexSettings.useDoubleTapOnly
+        hotKeyProcessor.recordingMode = hexSettings.recordingMode
         hotKeyProcessor.minimumKeyTime = hexSettings.minimumKeyTime
 
         switch inputEvent {
@@ -189,15 +189,15 @@ private extension TranscriptionFeature {
           // Process the key event
           switch hotKeyProcessor.process(keyEvent: keyEvent) {
           case .startRecording:
-            // If double-tap lock is triggered, we start recording immediately
-            if hotKeyProcessor.state == .doubleTapLock {
+            // If double-tap lock or toggle is triggered, we start recording immediately
+            if hotKeyProcessor.state == .doubleTapLock || hotKeyProcessor.state == .toggleActive {
               Task { await send(.startRecording) }
             } else {
               Task { await send(.hotKeyPressed) }
             }
             // If the hotkey is purely modifiers, return false to keep it from interfering with normal usage
-            // But if useDoubleTapOnly is true, always intercept the key
-            return hexSettings.useDoubleTapOnly || keyEvent.key != nil
+            // But if recording mode is doubleTapLock or toggle, always intercept the key
+            return hexSettings.recordingMode != .pressAndHold || keyEvent.key != nil
 
           case .stopRecording:
             Task { await send(.hotKeyReleased) }

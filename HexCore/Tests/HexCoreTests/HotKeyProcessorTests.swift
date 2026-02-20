@@ -561,6 +561,188 @@ struct HotKeyProcessorTests {
             ]
         )
     }
+
+    // MARK: - Toggle Mode Tests
+
+    // Tests that a single press starts recording in toggle mode (key+modifier)
+    @Test
+    func toggle_startsOnPress_standard() throws {
+        runScenario(
+            hotkey: HotKey(key: .a, modifiers: [.command]),
+            recordingMode: .toggle,
+            steps: [
+                ScenarioStep(time: 0.0, key: .a, modifiers: [.command], expectedOutput: .startRecording, expectedIsMatched: true, expectedState: .toggleActive),
+            ]
+        )
+    }
+
+    // Tests that a single press starts recording in toggle mode (modifier-only)
+    @Test
+    func toggle_startsOnPress_modifierOnly() throws {
+        runScenario(
+            hotkey: HotKey(key: nil, modifiers: [.option]),
+            recordingMode: .toggle,
+            steps: [
+                ScenarioStep(time: 0.0, key: nil, modifiers: [.option], expectedOutput: .startRecording, expectedIsMatched: true, expectedState: .toggleActive),
+            ]
+        )
+    }
+
+    // Tests that releasing the hotkey does NOT stop recording in toggle mode
+    @Test
+    func toggle_releaseDoesNotStop_standard() throws {
+        runScenario(
+            hotkey: HotKey(key: .a, modifiers: [.command]),
+            recordingMode: .toggle,
+            steps: [
+                // Start recording
+                ScenarioStep(time: 0.0, key: .a, modifiers: [.command], expectedOutput: .startRecording, expectedIsMatched: true),
+                // Release key - should NOT stop
+                ScenarioStep(time: 0.2, key: nil, modifiers: [.command], expectedOutput: nil, expectedIsMatched: true),
+                // Release all - should still NOT stop
+                ScenarioStep(time: 0.3, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true, expectedState: .toggleActive),
+            ]
+        )
+    }
+
+    // Tests that releasing the hotkey does NOT stop recording in toggle mode (modifier-only)
+    @Test
+    func toggle_releaseDoesNotStop_modifierOnly() throws {
+        runScenario(
+            hotkey: HotKey(key: nil, modifiers: [.option]),
+            recordingMode: .toggle,
+            steps: [
+                // Start recording
+                ScenarioStep(time: 0.0, key: nil, modifiers: [.option], expectedOutput: .startRecording, expectedIsMatched: true),
+                // Release all - should NOT stop
+                ScenarioStep(time: 0.2, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true, expectedState: .toggleActive),
+            ]
+        )
+    }
+
+    // Tests that pressing hotkey again stops recording in toggle mode
+    @Test
+    func toggle_secondPressStops_standard() throws {
+        runScenario(
+            hotkey: HotKey(key: .a, modifiers: [.command]),
+            recordingMode: .toggle,
+            steps: [
+                // Start recording
+                ScenarioStep(time: 0.0, key: .a, modifiers: [.command], expectedOutput: .startRecording, expectedIsMatched: true),
+                // Release
+                ScenarioStep(time: 0.2, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true),
+                // Press again - should stop
+                ScenarioStep(time: 1.0, key: .a, modifiers: [.command], expectedOutput: .stopRecording, expectedIsMatched: false, expectedState: .idle),
+            ]
+        )
+    }
+
+    // Tests that pressing hotkey again stops recording in toggle mode (modifier-only)
+    @Test
+    func toggle_secondPressStops_modifierOnly() throws {
+        runScenario(
+            hotkey: HotKey(key: nil, modifiers: [.option]),
+            recordingMode: .toggle,
+            steps: [
+                // Start recording
+                ScenarioStep(time: 0.0, key: nil, modifiers: [.option], expectedOutput: .startRecording, expectedIsMatched: true),
+                // Release
+                ScenarioStep(time: 0.2, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true),
+                // Press again - should stop
+                ScenarioStep(time: 1.0, key: nil, modifiers: [.option], expectedOutput: .stopRecording, expectedIsMatched: false, expectedState: .idle),
+            ]
+        )
+    }
+
+    // Tests that ESC cancels recording in toggle mode
+    @Test
+    func toggle_escapeCancels() throws {
+        runScenario(
+            hotkey: HotKey(key: .a, modifiers: [.command]),
+            recordingMode: .toggle,
+            steps: [
+                // Start recording
+                ScenarioStep(time: 0.0, key: .a, modifiers: [.command], expectedOutput: .startRecording, expectedIsMatched: true),
+                // Release hotkey
+                ScenarioStep(time: 0.2, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true),
+                // Press ESC
+                ScenarioStep(time: 1.0, key: .escape, modifiers: [], expectedOutput: .cancel, expectedIsMatched: false, expectedState: .idle),
+            ]
+        )
+    }
+
+    // Tests that other key presses are ignored in toggle mode
+    @Test
+    func toggle_ignoresOtherKeys() throws {
+        runScenario(
+            hotkey: HotKey(key: .a, modifiers: [.command]),
+            recordingMode: .toggle,
+            steps: [
+                // Start recording
+                ScenarioStep(time: 0.0, key: .a, modifiers: [.command], expectedOutput: .startRecording, expectedIsMatched: true),
+                // Release hotkey
+                ScenarioStep(time: 0.2, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true),
+                // Press a different key - should be ignored
+                ScenarioStep(time: 0.5, key: .b, modifiers: [.command], expectedOutput: nil, expectedIsMatched: true, expectedState: .toggleActive),
+                // Type normally - should be ignored
+                ScenarioStep(time: 0.6, key: .c, modifiers: [], expectedOutput: nil, expectedIsMatched: true),
+            ]
+        )
+    }
+
+    // Tests mouse click is ignored in toggle mode
+    @Test
+    func toggle_mouseClickIgnored() throws {
+        var processor = withDependencies {
+            $0.date.now = Date(timeIntervalSince1970: 0)
+        } operation: {
+            HotKeyProcessor(hotkey: HotKey(key: nil, modifiers: [.option]), recordingMode: .toggle)
+        }
+
+        // Start recording
+        let startOutput = withDependencies {
+            $0.date.now = Date(timeIntervalSince1970: 0)
+        } operation: {
+            processor.process(keyEvent: KeyEvent(key: nil, modifiers: [.option]))
+        }
+        #expect(startOutput == .startRecording)
+        #expect(processor.state == .toggleActive)
+
+        // Mouse click should be ignored
+        let clickOutput = withDependencies {
+            $0.date.now = Date(timeIntervalSince1970: 0.1)
+        } operation: {
+            processor.processMouseClick()
+        }
+        #expect(clickOutput == nil)
+        #expect(processor.state == .toggleActive)
+    }
+
+    // Tests full toggle cycle: start → type → stop → start again
+    @Test
+    func toggle_fullCycle() throws {
+        runScenario(
+            hotkey: HotKey(key: nil, modifiers: [.option]),
+            recordingMode: .toggle,
+            steps: [
+                // Start recording
+                ScenarioStep(time: 0.0, key: nil, modifiers: [.option], expectedOutput: .startRecording, expectedIsMatched: true),
+                // Release
+                ScenarioStep(time: 0.1, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true),
+                // Type some text (ignored)
+                ScenarioStep(time: 0.5, key: .a, modifiers: [], expectedOutput: nil, expectedIsMatched: true),
+                ScenarioStep(time: 0.6, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true),
+                // Stop recording
+                ScenarioStep(time: 2.0, key: nil, modifiers: [.option], expectedOutput: .stopRecording, expectedIsMatched: false),
+                // Release
+                ScenarioStep(time: 2.1, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: false),
+                // Start a new recording
+                ScenarioStep(time: 3.0, key: nil, modifiers: [.option], expectedOutput: .startRecording, expectedIsMatched: true),
+                // Release
+                ScenarioStep(time: 3.1, key: nil, modifiers: [], expectedOutput: nil, expectedIsMatched: true, expectedState: .toggleActive),
+            ]
+        )
+    }
 }
 
 struct ScenarioStep {
@@ -603,6 +785,7 @@ struct ScenarioStep {
 
 func runScenario(
     hotkey: HotKey,
+    recordingMode: RecordingMode = .pressAndHold,
     steps: [ScenarioStep]
 ) {
     // Sort steps by time, just in case they're not in ascending order
@@ -615,7 +798,7 @@ func runScenario(
     var processor = withDependencies {
         $0.date.now = Date(timeIntervalSince1970: currentTime)
     } operation: {
-        HotKeyProcessor(hotkey: hotkey)
+        HotKeyProcessor(hotkey: hotkey, recordingMode: recordingMode)
     }
 
     // We'll step through each event

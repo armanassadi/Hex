@@ -40,17 +40,21 @@ struct HotKeySectionView: View {
                 }
             }
 
-            // Double-tap toggle (for key+modifier combinations)
-            if hotKey.key != nil {
-                Label {
-                    Toggle("Use double-tap only", isOn: $store.hexSettings.useDoubleTapOnly)
-                } icon: {
-                    Image(systemName: "hand.tap")
+            // Recording mode picker
+            Label {
+                Picker("Recording Mode", selection: $store.hexSettings.recordingMode) {
+                    Text("Toggle").tag(RecordingMode.toggle)
+                    Text("Press & Hold").tag(RecordingMode.pressAndHold)
+                    Text("Double-Tap Lock").tag(RecordingMode.doubleTapLock)
                 }
+                .pickerStyle(.menu)
+            } icon: {
+                Image(systemName: "hand.tap")
             }
 
-            // Minimum key time (for modifier-only shortcuts)
-            if store.hexSettings.hotkey.key == nil {
+            // Minimum key time (for modifier-only shortcuts in press-and-hold mode)
+            if store.hexSettings.hotkey.key == nil,
+               store.hexSettings.recordingMode == .pressAndHold {
                 Label {
                     Slider(value: $store.hexSettings.minimumKeyTime, in: 0.0 ... 2.0, step: 0.1) {
                         Text("Ignore below \(store.hexSettings.minimumKeyTime, specifier: "%.1f")s")
