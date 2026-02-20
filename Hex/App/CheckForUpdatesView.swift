@@ -15,7 +15,7 @@ final class CheckForUpdatesViewModel {
 	static let shared = CheckForUpdatesViewModel()
 
 	let controller = SPUStandardUpdaterController(
-		startingUpdater: true,
+		startingUpdater: false,
 		updaterDelegate: nil,
 		userDriverDelegate: nil
 	)
