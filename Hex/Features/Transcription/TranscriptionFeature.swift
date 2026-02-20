@@ -411,6 +411,7 @@ private extension TranscriptionFeature {
     let remappings = state.hexSettings.wordRemappings
     let removalsEnabled = state.hexSettings.wordRemovalsEnabled
     let removals = state.hexSettings.wordRemovals
+    let vocabulary = state.hexSettings.customVocabulary
     let modifiedResult: String
     if state.isRemappingScratchpadFocused {
       modifiedResult = result
@@ -424,6 +425,13 @@ private extension TranscriptionFeature {
           transcriptionFeatureLogger.info("Applied \(enabledRemovalCount) word removal(s)")
         }
         output = removedResult
+      }
+      if !vocabulary.isEmpty {
+        let vocabResult = VocabularyApplier.apply(output, vocabulary: vocabulary)
+        if vocabResult != output {
+          transcriptionFeatureLogger.info("Applied \(vocabulary.count) vocabulary correction(s)")
+        }
+        output = vocabResult
       }
       let remappedResult = WordRemappingApplier.apply(output, remappings: remappings)
       if remappedResult != output {

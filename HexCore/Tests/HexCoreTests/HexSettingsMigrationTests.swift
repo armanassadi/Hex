@@ -23,6 +23,8 @@ final class HexSettingsMigrationTests: XCTestCase {
 		XCTAssertEqual(decoded.maxHistoryEntries, 10)
 		XCTAssertEqual(decoded.hasCompletedModelBootstrap, true)
 		XCTAssertEqual(decoded.hasCompletedStorageMigration, true)
+		XCTAssertEqual(decoded.wordRemovalsEnabled, true, "Default for wordRemovalsEnabled should be true")
+		XCTAssertEqual(decoded.customVocabulary, [], "Legacy fixture should default to empty vocabulary")
 	}
 
 	func testEncodeDecodeRoundTripPreservesDefaults() throws {

@@ -91,6 +91,10 @@ struct SettingsFeature {
     case addWordRemapping
     case removeWordRemapping(UUID)
     case setRemappingScratchpadFocused(Bool)
+
+    // Vocabulary
+    case addVocabularyWord
+    case removeVocabularyWord(Int)
   }
 
   @Dependency(\.keyEventMonitor) var keyEventMonitor
@@ -216,6 +220,19 @@ struct SettingsFeature {
 
       case let .setRemappingScratchpadFocused(isFocused):
         state.$isRemappingScratchpadFocused.withLock { $0 = isFocused }
+        return .none
+
+      case .addVocabularyWord:
+        state.$hexSettings.withLock {
+          $0.customVocabulary.append("")
+        }
+        return .none
+
+      case let .removeVocabularyWord(index):
+        state.$hexSettings.withLock {
+          guard $0.customVocabulary.indices.contains(index) else { return }
+          $0.customVocabulary.remove(at: index)
+        }
         return .none
 
       case .startSettingPasteLastTranscriptHotkey:

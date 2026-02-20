@@ -55,6 +55,7 @@ public struct HexSettings: Codable, Equatable, Sendable {
 	public var wordRemovalsEnabled: Bool
 	public var wordRemovals: [WordRemoval]
 	public var wordRemappings: [WordRemapping]
+	public var customVocabulary: [String]
 
 	public init(
 		soundEffectsEnabled: Bool = true,
@@ -76,9 +77,10 @@ public struct HexSettings: Codable, Equatable, Sendable {
 		pasteLastTranscriptHotkey: HotKey? = HexSettings.defaultPasteLastTranscriptHotkey,
 		hasCompletedModelBootstrap: Bool = false,
 		hasCompletedStorageMigration: Bool = false,
-		wordRemovalsEnabled: Bool = false,
+		wordRemovalsEnabled: Bool = true,
 		wordRemovals: [WordRemoval] = HexSettings.defaultWordRemovals,
-		wordRemappings: [WordRemapping] = []
+		wordRemappings: [WordRemapping] = [],
+		customVocabulary: [String] = []
 	) {
 		self.soundEffectsEnabled = soundEffectsEnabled
 		self.soundEffectsVolume = soundEffectsVolume
@@ -102,6 +104,7 @@ public struct HexSettings: Codable, Equatable, Sendable {
 		self.wordRemovalsEnabled = wordRemovalsEnabled
 		self.wordRemovals = wordRemovals
 		self.wordRemappings = wordRemappings
+		self.customVocabulary = customVocabulary
 	}
 
 	public init(from decoder: Decoder) throws {
@@ -147,6 +150,7 @@ private enum HexSettingKey: String, CodingKey, CaseIterable {
 	case wordRemovalsEnabled
 	case wordRemovals
 	case wordRemappings
+	case customVocabulary
 }
 
 private struct SettingsField<Value: Codable & Sendable> {
@@ -292,6 +296,11 @@ private enum HexSettingsSchema {
 			.wordRemappings,
 			keyPath: \.wordRemappings,
 			default: defaults.wordRemappings
+		).eraseToAny(),
+		SettingsField(
+			.customVocabulary,
+			keyPath: \.customVocabulary,
+			default: defaults.customVocabulary
 		).eraseToAny()
 	]
 }
