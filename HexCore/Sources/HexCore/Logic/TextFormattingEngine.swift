@@ -52,6 +52,27 @@ public enum TextFormattingEngine {
 			self.deduplicateWords = deduplicateWords
 			self.formatEmails = formatEmails
 		}
+
+		private enum CodingKeys: String, CodingKey {
+			case removeTrailingPeriod, lowercaseShortPhrases, shortPhraseMaxWords,
+				fixMidSentenceCapitalization, convertNumbersToDigits, formatCurrency,
+				formatPercentages, formatTimes, deduplicateWords, formatEmails
+		}
+
+		public init(from decoder: Decoder) throws {
+			let container = try decoder.container(keyedBy: CodingKeys.self)
+			let d = Config()
+			self.removeTrailingPeriod = try container.decodeIfPresent(Bool.self, forKey: .removeTrailingPeriod) ?? d.removeTrailingPeriod
+			self.lowercaseShortPhrases = try container.decodeIfPresent(Bool.self, forKey: .lowercaseShortPhrases) ?? d.lowercaseShortPhrases
+			self.shortPhraseMaxWords = try container.decodeIfPresent(Int.self, forKey: .shortPhraseMaxWords) ?? d.shortPhraseMaxWords
+			self.fixMidSentenceCapitalization = try container.decodeIfPresent(Bool.self, forKey: .fixMidSentenceCapitalization) ?? d.fixMidSentenceCapitalization
+			self.convertNumbersToDigits = try container.decodeIfPresent(Bool.self, forKey: .convertNumbersToDigits) ?? d.convertNumbersToDigits
+			self.formatCurrency = try container.decodeIfPresent(Bool.self, forKey: .formatCurrency) ?? d.formatCurrency
+			self.formatPercentages = try container.decodeIfPresent(Bool.self, forKey: .formatPercentages) ?? d.formatPercentages
+			self.formatTimes = try container.decodeIfPresent(Bool.self, forKey: .formatTimes) ?? d.formatTimes
+			self.deduplicateWords = try container.decodeIfPresent(Bool.self, forKey: .deduplicateWords) ?? d.deduplicateWords
+			self.formatEmails = try container.decodeIfPresent(Bool.self, forKey: .formatEmails) ?? d.formatEmails
+		}
 	}
 
 	/// Apply all enabled formatting rules to the transcribed text.

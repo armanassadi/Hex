@@ -117,7 +117,11 @@ public struct HexSettings: Codable, Equatable, Sendable {
 		self.init()
 		let container = try decoder.container(keyedBy: HexSettingKey.self)
 		for field in HexSettingsSchema.fields {
-			try field.decode(into: &self, from: container)
+			do {
+				try field.decode(into: &self, from: container)
+			} catch {
+				HexLog.settings.error("Failed to decode setting '\(field.key.rawValue, privacy: .public)': \(error.localizedDescription, privacy: .public). Using default.")
+			}
 		}
 	}
 

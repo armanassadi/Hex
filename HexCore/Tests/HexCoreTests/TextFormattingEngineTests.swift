@@ -577,4 +577,57 @@ final class TextFormattingEngineTests: XCTestCase {
 	func testParseAHundred() {
 		XCTAssertEqual(TextFormattingEngine.parseNumberWords(["a", "hundred"]), 100)
 	}
+
+	// MARK: - Config Decoder Resilience
+
+	func testConfigDecodesFromPartialJSON() throws {
+		let json = """
+		{
+			"removeTrailingPeriod": false,
+			"lowercaseShortPhrases": false,
+			"shortPhraseMaxWords": 3
+		}
+		""".data(using: .utf8)!
+		let decoded = try JSONDecoder().decode(TextFormattingEngine.Config.self, from: json)
+		// Present keys should be decoded
+		XCTAssertEqual(decoded.removeTrailingPeriod, false)
+		XCTAssertEqual(decoded.lowercaseShortPhrases, false)
+		XCTAssertEqual(decoded.shortPhraseMaxWords, 3)
+		// Missing keys should use defaults
+		let defaults = TextFormattingEngine.Config()
+		XCTAssertEqual(decoded.fixMidSentenceCapitalization, defaults.fixMidSentenceCapitalization)
+		XCTAssertEqual(decoded.convertNumbersToDigits, defaults.convertNumbersToDigits)
+		XCTAssertEqual(decoded.formatCurrency, defaults.formatCurrency)
+		XCTAssertEqual(decoded.formatPercentages, defaults.formatPercentages)
+		XCTAssertEqual(decoded.formatTimes, defaults.formatTimes)
+		XCTAssertEqual(decoded.deduplicateWords, defaults.deduplicateWords)
+		XCTAssertEqual(decoded.formatEmails, defaults.formatEmails)
+	}
+
+	func testConfigDecodesFromEmptyObject() throws {
+		let json = "{}".data(using: .utf8)!
+		let decoded = try JSONDecoder().decode(TextFormattingEngine.Config.self, from: json)
+		XCTAssertEqual(decoded, TextFormattingEngine.Config())
+	}
+
+	func testConfigDecodesWithExtraUnknownKeys() throws {
+		let json = """
+		{
+			"removeTrailingPeriod": true,
+			"lowercaseShortPhrases": true,
+			"shortPhraseMaxWords": 5,
+			"fixMidSentenceCapitalization": true,
+			"convertNumbersToDigits": true,
+			"formatCurrency": true,
+			"formatPercentages": true,
+			"formatTimes": true,
+			"deduplicateWords": true,
+			"formatEmails": true,
+			"formatPhoneNumbers": true,
+			"futureFeatureFlag": 42
+		}
+		""".data(using: .utf8)!
+		let decoded = try JSONDecoder().decode(TextFormattingEngine.Config.self, from: json)
+		XCTAssertEqual(decoded, TextFormattingEngine.Config())
+	}
 }

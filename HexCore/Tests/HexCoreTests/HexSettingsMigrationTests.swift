@@ -36,6 +36,78 @@ final class HexSettingsMigrationTests: XCTestCase {
 		XCTAssertEqual(decoded, settings)
 	}
 
+	func testSettingsDecodeSucceedsWithPartialSmartFormattingConfig() throws {
+		let json = """
+		{
+			"soundEffectsEnabled": false,
+			"soundEffectsVolume": 0.05,
+			"hotkey": {"modifiers": {"modifiers": [{"kind": "option", "side": "either"}]}},
+			"openOnLogin": true,
+			"showDockIcon": false,
+			"selectedModel": "parakeet-tdt-0.6b-v2-coreml",
+			"useClipboardPaste": true,
+			"preventSystemSleep": true,
+			"recordingAudioBehavior": "mute",
+			"minimumKeyTime": 0.3,
+			"copyToClipboard": false,
+			"recordingMode": "toggle",
+			"saveTranscriptionHistory": true,
+			"hasCompletedModelBootstrap": true,
+			"hasCompletedStorageMigration": true,
+			"wordRemovalsEnabled": true,
+			"wordRemovals": [],
+			"wordRemappings": [],
+			"customVocabulary": ["Kubernetes", "API"],
+			"smartFormattingEnabled": true,
+			"smartFormattingConfig": {
+				"removeTrailingPeriod": false,
+				"lowercaseShortPhrases": true,
+				"shortPhraseMaxWords": 8
+			}
+		}
+		""".data(using: .utf8)!
+		let decoded = try JSONDecoder().decode(HexSettings.self, from: json)
+
+		// Non-Config settings must survive
+		XCTAssertEqual(decoded.soundEffectsEnabled, false)
+		XCTAssertEqual(decoded.soundEffectsVolume, 0.05)
+		XCTAssertEqual(decoded.selectedModel, "parakeet-tdt-0.6b-v2-coreml")
+		XCTAssertEqual(decoded.customVocabulary, ["Kubernetes", "API"])
+		XCTAssertEqual(decoded.minimumKeyTime, 0.3)
+		XCTAssertEqual(decoded.openOnLogin, true)
+		XCTAssertEqual(decoded.hasCompletedModelBootstrap, true)
+		XCTAssertEqual(decoded.recordingAudioBehavior, .mute)
+
+		// Config fields that were present should be decoded
+		XCTAssertEqual(decoded.smartFormattingConfig.removeTrailingPeriod, false)
+		XCTAssertEqual(decoded.smartFormattingConfig.lowercaseShortPhrases, true)
+		XCTAssertEqual(decoded.smartFormattingConfig.shortPhraseMaxWords, 8)
+
+		// Config fields that were missing should use defaults
+		let defaults = TextFormattingEngine.Config()
+		XCTAssertEqual(decoded.smartFormattingConfig.fixMidSentenceCapitalization, defaults.fixMidSentenceCapitalization)
+		XCTAssertEqual(decoded.smartFormattingConfig.formatEmails, defaults.formatEmails)
+		XCTAssertEqual(decoded.smartFormattingConfig.deduplicateWords, defaults.deduplicateWords)
+	}
+
+	func testSettingsDecodePreservesAllFieldsWhenConfigIsEmpty() throws {
+		let json = """
+		{
+			"soundEffectsEnabled": false,
+			"selectedModel": "whisper-large-v3",
+			"customVocabulary": ["Docker"],
+			"smartFormattingConfig": {}
+		}
+		""".data(using: .utf8)!
+		let decoded = try JSONDecoder().decode(HexSettings.self, from: json)
+
+		XCTAssertEqual(decoded.soundEffectsEnabled, false)
+		XCTAssertEqual(decoded.selectedModel, "whisper-large-v3")
+		XCTAssertEqual(decoded.customVocabulary, ["Docker"])
+		XCTAssertEqual(decoded.smartFormattingConfig, TextFormattingEngine.Config(),
+			"Empty config object should produce all defaults, not crash")
+	}
+
 	private func loadFixture(named name: String) throws -> Data {
 		guard let url = Bundle.module.url(
 			forResource: name,
